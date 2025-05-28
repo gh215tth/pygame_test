@@ -4,12 +4,22 @@ import os
 
 # === Cấu hình cơ bản ===
 pygame.init()
-WIDTH, HEIGHT = 480, 640
+WIDTH, HEIGHT = 580, 640
 ROWS, COLS = 8, 8
 TILE_SIZE = 60
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Match-3 Candy Game")
+
+# === Font, thời gian và điểm ===
+font = pygame.font.SysFont(None, 32)
+start_time = pygame.time.get_ticks()
+time_limit = 30
+score = 0
+
+# === Tải ảnh nền ===
+background = pygame.image.load("candies/background.jpg")
+background = pygame.transform.scale(background, (WIDTH, HEIGHT))
 
 # === Tải hình ảnh viên kẹo ===
 image_folder = "candies"
@@ -24,29 +34,35 @@ NUM_TYPES = len(all_images)
 
 # === Lưới viên kẹo ===
 grid = [[random.randint(0, NUM_TYPES - 1) for _ in range(COLS)] for _ in range(ROWS)]
-selected = []  # lưu 2 ô được chọn
+selected = []
 
 # === Hàm hỗ trợ ===
+def draw_info():
+    elapsed = (pygame.time.get_ticks() - start_time) // 1000
+    remaining = max(0, time_limit - elapsed)
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    time_text = font.render(f"Time: {remaining}s", True, (200, 255, 0))
+    screen.blit(score_text, (20, 10))
+    screen.blit(time_text, (WIDTH - 150, 10))
+
 def draw_board():
-    screen.fill((30, 30, 30))
+    screen.blit(background, (0, 0))
     for row in range(ROWS):
         for col in range(COLS):
             x = col * TILE_SIZE + 50
             y = row * TILE_SIZE + 50
             tile_type = grid[row][col]
-            screen.blit(all_images[tile_type], (x, y))
-            # Vẽ khung nếu được chọn
+            if tile_type >= 0:
+                screen.blit(all_images[tile_type], (x, y))
             if [row, col] in selected:
                 pygame.draw.rect(screen, (255, 255, 255), (x, y, TILE_SIZE, TILE_SIZE), 3)
-
+    draw_info()
 
 def swap(a, b):
     grid[a[0]][a[1]], grid[b[0]][b[1]] = grid[b[0]][b[1]], grid[a[0]][a[1]]
 
-
 def is_adjacent(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1
-
 
 def find_matches():
     matched = []
@@ -65,11 +81,9 @@ def find_matches():
 
     return matched
 
-
 def remove_matches(matches):
     for row, col in matches:
-        grid[row][col] = -1  # gán -1 để xóa
-
+        grid[row][col] = -1
 
 def drop_candies():
     for col in range(COLS):
@@ -87,6 +101,12 @@ clock = pygame.time.Clock()
 running = True
 
 while running:
+    elapsed = (pygame.time.get_ticks() - start_time) // 1000
+    if elapsed >= time_limit:
+        print("⏰ Hết thời gian! Tổng điểm:", score)
+        running = False
+        continue
+
     draw_board()
     pygame.display.flip()
 
@@ -107,17 +127,21 @@ while running:
                         swap(a, b)
                         matches = find_matches()
                         if matches:
+                            score += len(matches) * 10
+                            time_limit += len(matches) - 2
                             remove_matches(matches)
+                            drop_candies()
                         else:
-                            swap(a, b)  # hoàn tác nếu không match
+                            swap(a, b)
                     selected = []
 
-    matches = find_matches()
-    if matches:
-        remove_matches(matches)
-        drop_candies()
-
+    while True:
+        matches = find_matches()
+        if matches:
+            remove_matches(matches)
+            drop_candies()
+        else:
+            break
     clock.tick(60)
 
 pygame.quit()
-
