@@ -2,7 +2,6 @@ import pygame
 import random
 import os
 
-# === Cấu hình cơ bản ===
 pygame.init()
 WIDTH, HEIGHT = 580, 640
 ROWS, COLS = 8, 8
@@ -11,17 +10,14 @@ TILE_SIZE = 60
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Match-3 Candy Game")
 
-# === Font, thời gian và điểm ===
 font = pygame.font.SysFont(None, 32)
 start_time = pygame.time.get_ticks()
 time_limit = 30
 score = 0
 
-# === Tải ảnh nền ===
 background = pygame.image.load("candies/background.jpg")
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
 
-# === Tải hình ảnh viên kẹo ===
 image_folder = "candies"
 all_images = []
 for filename in os.listdir(image_folder):
@@ -32,11 +28,9 @@ for filename in os.listdir(image_folder):
 
 NUM_TYPES = len(all_images)
 
-# === Lưới viên kẹo ===
 grid = [[random.randint(0, NUM_TYPES - 1) for _ in range(COLS)] for _ in range(ROWS)]
 selected = []
 
-# === Hàm hỗ trợ ===
 def draw_info():
     elapsed = (pygame.time.get_ticks() - start_time) // 1000
     remaining = max(0, time_limit - elapsed)
@@ -67,13 +61,11 @@ def is_adjacent(a, b):
 def find_matches():
     matched = []
 
-    # Theo hàng
     for row in range(ROWS):
         for col in range(COLS - 2):
             if grid[row][col] == grid[row][col + 1] == grid[row][col + 2]:
                 matched.extend([[row, col], [row, col + 1], [row, col + 2]])
 
-    # Theo cột
     for col in range(COLS):
         for row in range(ROWS - 2):
             if grid[row][col] == grid[row + 1][col] == grid[row + 2][col]:
@@ -96,14 +88,13 @@ def drop_candies():
                 else:
                     grid[row][col] = random.randint(0, NUM_TYPES - 1)
 
-# === Vòng lặp chính ===
 clock = pygame.time.Clock()
 running = True
 
 while running:
     elapsed = (pygame.time.get_ticks() - start_time) // 1000
     if elapsed >= time_limit:
-        print("⏰ Hết thời gian! Tổng điểm:", score)
+        print("⏰ Time out! Score:", score)
         running = False
         continue
 
